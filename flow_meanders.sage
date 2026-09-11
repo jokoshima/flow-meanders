@@ -49,6 +49,7 @@ flow=False returns an undirected meander as described in DK2000.
 """
 def meander(L1, L2):
     n = sum(L1)
+
     fmeander=[]
     tb=blocks(L1)
     bb=blocks(L2)
@@ -57,7 +58,7 @@ def meander(L1, L2):
         fmeander += list(zip(t, reversed(t), ['T']*len(t)))[:len(t)//2] 
     for t in bb:
         fmeander += list(zip(t, reversed(t), ['B']*len(t)))[:len(t)//2]
-    return Graph(fmeander, multiedges=True)
+    return Graph([list(range(1, n+1)), fmeander], multiedges=True, format="vertices_and_edges")
 
 """
 Takes the meander graph corresponding to the seaweed algebra 
@@ -78,7 +79,7 @@ constructs a sink flow meander by connecting every vertex
 to a new sink vertex n+1.
 """
 def sink_flow_meander(L1, L2):
-    M = flow_meander(L1, L2)
+    M = meander(L1, L2)
     edges = list(M.edges())
     edges += [(i+1, M.order()+1, 'G') for i in range(M.order())] # G stands for gutter, since S is taken.
     return DiGraph(edges, multiedges=True)
@@ -195,12 +196,12 @@ def draw_sink_flow_meander(M, L1, L2):
     plot.savefig(" ".join(["sfmeander", str(L1), str(L2)]) + ".png", dpi=480)
     plot.clear()
 
+
 def data_dictionary(L1, L2, vec):
     data = dict()
     M = meander(L1, L2)
     F = flow_meander(L1, L2)
     S = sink_flow_meander(L1, L2)
-    
     data["top_comp"] = "|".join([str(c) for c in L1])
     data["bottom_comp"] = "|".join([str(c) for c in L2])
     pieces = connected_components_subgraphs(M)
@@ -216,56 +217,46 @@ def data_dictionary(L1, L2, vec):
         else:
             data["paths"] += 1
     data["index"] = 2*data["cycles"] + data["paths"]
-    
-    FP = weighted_flow_polytope(F, vec[:-1])
-    data["fm_dimension"] = FP.dimension()
-    data["fm_volume"] = FP.volume(measure="induced")*factorial(data["fm_dimension"])
-    data["fm_ehrhart"] = str(FP.ehrhart_polynomial())
-    data["fm_fvector"] = FP.f_vector()
 
-    # SFP = weighted_flow_polytope(S, vec)
-    # print(S.sinks(), S.sources())
-    # data["sfm_dimension"] = SFP.dimension()
-    # data["sfm_volume"] = SFP.volume(measure="induced")*factorial(data["sfm_dimension"])
-    # data["sfm_ehrhart"] = str(SFP.ehrhart_polynomial())
-    # data["sfm_fvector"] = SFP.f_vector()
+    FP = weighted_flow_polytope(F, vec[:-1])
+    fpoly = FP.ehrhart_polynomial()
+    data["fm_dimension"] = fpoly.degree()
+    data["fm_volume"] = fpoly.lc()
+    data["fm_nvolume"] = data["fm_volume"]*factorial(data["fm_dimension"])
+    data["fm_ehrhart"] = str(fpoly)
+    data["fm_fvector"] = FP.f_vector()
+    
+    SFP = weighted_flow_polytope(S, vec)
+    sfpoly = SFP.ehrhart_polynomial()
+    data["sfm_dimension"] = sfpoly.degree()
+    data["sfm_volume"] = sfpoly.lc()
+    data["sfm_nvolume"] = data["sfm_volume"]*factorial(data["sfm_dimension"])
+    data["sfm_ehrhart"] = str(sfpoly)
+    data["sfm_fvector"] = SFP.f_vector()
+
     return data
 
-A1 = [6,4,2]
-A2 = [2,6,4]
-B1 = [2,4]
-B2 = [1,2,3]
-# P = flow_poly(B1, B2)
-# print(P.dimension())
-# print(P.volume(measure="induced"))
-# print(P.ehrhart_polynomial())
-# comps = list(Compositions(3))
-# for i in range(len(comps)):
-#     for j in range(i, len(comps)):
-#         print(comps[i], comps[j])
-dataB = data_dictionary(B1, B2, tuple([1] + [0]*(sum(B1)-1)))
-# dataA = data_dictionary(A1, A2, tuple([1] + [0]*(sum(A1)-1)))
-
-with open("polytope_data.csv", 'w') as f:
-    params = ["top_comp", "bottom_comp", "num_pieces", "cycles", "paths", "points", "index", "fm_dimension", "fm_volume", "fm_ehrhart", "fm_fvector"]
-    writer = csv.DictWriter(f, fieldnames=params, delimiter=';')
-    writer.writeheader()
-    #writer.writerow(dataA)
-    writer.writerow(dataB)
+# A1 = [6,4,2]
+# A2 = [2,6,4]
+# B1 = [2,4]
+# B2 = [1,2,3]
+# M = meander(A1, A2)
+# F = flow_meander(A1, A2)
+# S = sink_flow_meander(A1, A2)
+# P = weighted_flow_polytope(F, tuple([1] + [0]*10))
 
 
-# M = meander(B1, B2)
-# F = flow_meander(B1, B2)
-S = sink_flow_meander(B1, B2)
-# draw_meander(M, B1, B2)
-# draw_flow_meander(F, B1, B2)
-draw_sink_flow_meander(S, B1, B2)
-# print_meander(G, B1, B2)
-# P = flow_poly(B1,B2)
-# print(PVolume(P))
-# po=P.ehrhart_polynomial()
-# print(str(po))
-# print(po)
-# print(po.coefficient(4))
+params = ["top_comp", "bottom_comp", "num_pieces", "cycles", "paths", "points", "index", 
+        "fm_dimension", "fm_volume", "fm_nvolume", "fm_ehrhart", "fm_fvector", 
+        "sfm_dimension", "sfm_volume", "sfm_nvolume", "sfm_ehrhart", "sfm_fvector"]
 
-
+for n in range(1, 8):
+    vec = tuple([1] + [0]*n)
+    comps = list(Compositions(n+1))
+    with open("polytope_data_N=" + str(n+1) + ".csv", 'w') as f:
+        writer = csv.DictWriter(f, fieldnames=params, delimiter=';')
+        writer.writeheader()
+        for i in range(len(comps)):
+            for j in range(i, len(comps)):
+                #print(comps[i], comps[j])
+                writer.writerow(data_dictionary(list(comps[i]), list(comps[j]), vec))
