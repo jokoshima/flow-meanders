@@ -1,6 +1,7 @@
 from sage.features.latte import Latte_count, Latte_integrate
 from matplotlib.pyplot import figure
 from sage.graphs.connectivity import connected_components_subgraphs
+from numpy import concatenate as sumarr
 import csv
 
 """
@@ -236,27 +237,27 @@ def data_dictionary(L1, L2, vec):
 
     return data
 
-# A1 = [6,4,2]
-# A2 = [2,6,4]
-# B1 = [2,4]
-# B2 = [1,2,3]
-# M = meander(A1, A2)
-# F = flow_meander(A1, A2)
-# S = sink_flow_meander(A1, A2)
-# P = weighted_flow_polytope(F, tuple([1] + [0]*10))
+def comp_to_num(comp):
+    n = sum(comp)
+    digits = sumarr([[0] + [1]*(c-1) for c in comp])
+    num = sum(digits[i]*2^(n-1-i) for i in range(n))
+    return num
 
-
-params = ["top_comp", "bottom_comp", "num_pieces", "cycles", "paths", "points", "index", 
+params = ["No.", "top_comp", "bottom_comp", "num_pieces", "cycles", "paths", "points", "index", 
         "fm_dimension", "fm_volume", "fm_nvolume", "fm_ehrhart", "fm_fvector", 
         "sfm_dimension", "sfm_volume", "sfm_nvolume", "sfm_ehrhart", "sfm_fvector"]
 
-for n in range(1, 8):
-    vec = tuple([1] + [0]*n)
-    comps = list(Compositions(n+1))
-    with open("polytope_data_N=" + str(n+1) + ".csv", 'w') as f:
-        writer = csv.DictWriter(f, fieldnames=params, delimiter=';')
-        writer.writeheader()
+counter = 0
+with open("polytope_data_2-10.csv", 'w') as f:
+    writer = csv.DictWriter(f, fieldnames=params, delimiter=';')
+    writer.writeheader()
+    for n in range(1, 10):
+        print("Working on compositions of", str(n+1))
+        vec = tuple([1] + [0]*n)
+        comps = list(Compositions(n+1))
         for i in range(len(comps)):
             for j in range(i, len(comps)):
-                #print(comps[i], comps[j])
-                writer.writerow(data_dictionary(list(comps[i]), list(comps[j]), vec))
+                data = data_dictionary(list(comps[i]), list(comps[j]), vec)
+                data["No."] = counter
+                counter += 1
+                writer.writerow(data)
