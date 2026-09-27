@@ -217,13 +217,14 @@ def data_dictionary(L1, L2, vec):
             data["cycles"] += 1
         else:
             data["paths"] += 1
-    data["index"] = 2*data["cycles"] + data["paths"]
+    data["index"] = 2*data["cycles"] + data["paths"] + data["points"]
 
     FP = weighted_flow_polytope(F, vec[:-1])
     fpoly = FP.ehrhart_polynomial()
     data["fm_dimension"] = fpoly.degree()
     data["fm_volume"] = fpoly.lc()
     data["fm_nvolume"] = data["fm_volume"]*factorial(data["fm_dimension"])
+    data["fm_latpts"] = fpoly(1)
     data["fm_ehrhart"] = str(fpoly)
     data["fm_fvector"] = FP.f_vector()
     
@@ -232,6 +233,7 @@ def data_dictionary(L1, L2, vec):
     data["sfm_dimension"] = sfpoly.degree()
     data["sfm_volume"] = sfpoly.lc()
     data["sfm_nvolume"] = data["sfm_volume"]*factorial(data["sfm_dimension"])
+    data["sfm_latpts"] = sfpoly(1)
     data["sfm_ehrhart"] = str(sfpoly)
     data["sfm_fvector"] = SFP.f_vector()
 
@@ -243,30 +245,41 @@ params = ["No.", "top_comp", "bottom_comp", "num_pieces", "cycles", "paths", "po
 
 curr_params = ["sfm_dimension", "sfm_volume", "sfm_nvolume", "sfm_ehrhart", "sfm_fvector"]
 
-comps = [[[3,2,1], [1,3,2]], 
-         [[2,4], [1,2,3]], 
-         [[2,2,2], [2,2,2]], 
-         [[6], [4,2]], 
-         [[4,2], [2,4]], 
-         [[6], [5,1]], 
-         [[1,5], [6]]]
-
 f = open("data.txt", 'a')
+
+# for pair in comps:
+#     comp1 = pair[0]
+#     comp2 = pair[1]
+#     n = sum(comp1)
+#     vec = [0]*n
+#     print("Compositions:", "|".join([str(c) for c in comp1]), " ", "|".join([str(c) for c in comp2]), file=f)
+#     for i in range(n):
+#         vec[i] = 1
+#         data = data_dictionary(comp1, comp2, tuple(vec))
+#         print(vec, file=f)
+#         for key in curr_params:
+#             print(key, "->", data[key], file=f)
+#         print("-"*30, file=f)
+#     print("*"*50, file=f)
+#     print("-"*30, file=f)
+
+# f.close()
+
+N = 20
+comps = [[[n-3, 1, 1, 1], [n]] for n in range(4, N+1)]
+f = open("data[(n-3)|1|1|1___n].txt", 'a')
 
 for pair in comps:
     comp1 = pair[0]
     comp2 = pair[1]
     n = sum(comp1)
     vec = [0]*n
-    print("Compositions:", "|".join([str(c) for c in comp1]), " ", "|".join([str(c) for c in comp2]), file=f)
-    for i in range(n):
-        vec[i] = 1
-        data = data_dictionary(comp1, comp2, tuple(vec))
-        print(vec, file=f)
-        for key in curr_params:
-            print(key, "->", data[key], file=f)
-        print("-"*30, file=f)
-    print("*"*50, file=f)
+    vec[0] = 1
+    data = data_dictionary(comp1, comp2, tuple(vec))
+    print("Compositions:", "|".join([str(c) for c in comp1]), "//", "|".join([str(c) for c in comp2]), file=f)
+    print("Index:", data["index"], file=f)
+    print("Normalized volume of flow meander:", data["fm_nvolume"], file=f)
+    print("Number of integer lattice points:", data["fm_latpts"], file=f)
     print("-"*30, file=f)
 
 f.close()

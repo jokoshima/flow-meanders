@@ -1,0 +1,85 @@
+Compositions: 1|1|1|1 // 4
+Index: 2
+Normalized volume of flow meander: 1
+Number of integer lattice points: 3
+------------------------------
+Compositions: 2|1|1|1 // 5
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 5
+------------------------------
+Compositions: 3|1|1|1 // 6
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 6
+------------------------------
+Compositions: 4|1|1|1 // 7
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 7
+------------------------------
+Compositions: 5|1|1|1 // 8
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 8
+------------------------------
+Compositions: 6|1|1|1 // 9
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 9
+------------------------------
+Compositions: 7|1|1|1 // 10
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 10
+------------------------------
+Compositions: 8|1|1|1 // 11
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 11
+------------------------------
+Compositions: 9|1|1|1 // 12
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 12
+------------------------------
+Compositions: 10|1|1|1 // 13
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 13
+------------------------------
+Compositions: 11|1|1|1 // 14
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 14
+------------------------------
+Compositions: 12|1|1|1 // 15
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 15
+------------------------------
+Compositions: 13|1|1|1 // 16
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 16
+------------------------------
+Compositions: 14|1|1|1 // 17
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 17
+------------------------------
+Compositions: 15|1|1|1 // 18
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 18
+------------------------------
+Compositions: 16|1|1|1 // 19
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 19
+------------------------------
+Compositions: 17|1|1|1 // 20
+Index: 2
+Normalized volume of flow meander: 2
+Number of integer lattice points: 20
+------------------------------
