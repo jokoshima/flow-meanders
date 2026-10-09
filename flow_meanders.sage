@@ -2,6 +2,7 @@ from sage.features.latte import Latte_count, Latte_integrate
 from matplotlib.pyplot import figure
 from sage.graphs.connectivity import connected_components_subgraphs
 from numpy import concatenate as sumarr
+from sage.matrix.special import ith_to_zero_rotation_matrix as rotate
 import csv
 
 """
@@ -34,6 +35,72 @@ def weighted_flow_polytope(digraph, weight, edges=None, ends=None, backend=None)
         eqs.append(eq)
 
     return Polyhedron(ieqs=ineqs, eqns=eqs, backend=backend)
+
+def reduce_dim(pol):
+    pass
+
+"""
+Performs 2D rotations on a given polytope to reduce 
+its ambient space to the dimension of the polytope itself.
+"""
+def ambient_reduction(pol, nonneg=False, basis=False, symb=False):
+    amb = pol.ambient_dim()
+    dim = pol.dim()
+
+    # Selecting a cornered simplex
+    chain = list(pol.face_lattice().maximal_chains()[0])
+    simp_verts = []
+    for i in range(1, len(chain)):
+        for vert in chain[i].vertices():
+            if vert not in chain[i-1].vertices():
+                simp_verts.append(vert)
+                break
+    
+    # Translating polytope to have a corner at 0
+    t = [-coor for coor in list(simp_verts[0])]
+    pol = pol.translation(t)
+
+    # Turn every vertex object to a vector
+    simp_verts = [vector(v)+vector(t) for v in simp_verts]
+    all_verts = [vector(v) for v in list(pol.vertices())]
+    base_verts = False
+    if basis:
+        base_verts = [vector([0]*(i) + [1] + [0]*(dim-1-i)) for i in range(amb)]
+
+    # Rotations
+    for i in range(dim):
+        for j in range(amb-1, i, -1):
+            vert = simp_verts[i+1]
+            rot = rotate(vert, j)
+            simp_verts = [rot*v for v in simp_verts]
+            all_verts = [rot*v for v in all_verts]
+            if basis:
+                base_verts = [rot*v for v in base_verts]
+
+    # Reductions
+    all_verts = [v[:dim] for v in all_verts]
+
+    # Create new polytope:
+    numeric_verts = [[numerical_approx(coor) for coor in v] for v in all_verts]
+    new_pol = Polyhedron(vertices=numeric_verts)
+
+    # Flags
+    if nonneg:
+        t = [0]*dim
+        for vert in all_verts:
+            for j in range(dim):
+                if vert[j] < t[j]:
+                    t[j] = vert[j]
+        t = [-coor for coor in t]
+        new_pol = new_pol.translation(t)
+
+    ret = [new_pol]
+    if basis:
+        ret = ret + [base_verts]
+    if symb:
+        ret = ret + [all_verts]
+    return ret
+
 
 """
 Generates blocks of values over which have arcs in the meander.
@@ -245,56 +312,24 @@ params = ["No.", "top_comp", "bottom_comp", "num_pieces", "cycles", "paths", "po
 
 curr_params = ["sfm_dimension", "sfm_volume", "sfm_nvolume", "sfm_ehrhart", "sfm_fvector"]
 
-f = open("data.txt", 'a')
+pol1 = polytopes.permutahedron(3)
+new_pol = ambient_reduction(pol1, symb=True)
+print(*new_pol[1], sep="\n")
+print("#" * 30)
 
-# for pair in comps:
+pol2 = weighted_flow_polytope(flow_meander([2,1,1,1], [5]), (1,0,0,0))
+new_pol = ambient_reduction(pol2, symb=True)
+print(*new_pol[1], sep="\n")
+print("#" * 30)
+
+# upto = 6
+# pairs = [[[n-3,1,1,1], [n]] for n in range(5, upto+1)]
+# for pair in pairs:
 #     comp1 = pair[0]
 #     comp2 = pair[1]
-#     n = sum(comp1)
-#     vec = [0]*n
-#     print("Compositions:", "|".join([str(c) for c in comp1]), " ", "|".join([str(c) for c in comp2]), file=f)
-#     for i in range(n):
-#         vec[i] = 1
-#         data = data_dictionary(comp1, comp2, tuple(vec))
-#         print(vec, file=f)
-#         for key in curr_params:
-#             print(key, "->", data[key], file=f)
-#         print("-"*30, file=f)
-#     print("*"*50, file=f)
-#     print("-"*30, file=f)
+#     n = comp2[0]
+#     fm = flow_meander(comp1, comp2)
+#     fmpoly = weighted_flow_polytope(fm, tuple([1] + [0]*(n-2)))
+#     print(n)
+#     print(list(fmpoly.vertices()))
 
-# f.close()
-
-N = 20
-comps = [[[n-3, 1, 1, 1], [n]] for n in range(4, N+1)]
-f = open("data[(n-3)|1|1|1___n].txt", 'a')
-
-for pair in comps:
-    comp1 = pair[0]
-    comp2 = pair[1]
-    n = sum(comp1)
-    vec = [0]*n
-    vec[0] = 1
-    data = data_dictionary(comp1, comp2, tuple(vec))
-    print("Compositions:", "|".join([str(c) for c in comp1]), "//", "|".join([str(c) for c in comp2]), file=f)
-    print("Index:", data["index"], file=f)
-    print("Normalized volume of flow meander:", data["fm_nvolume"], file=f)
-    print("Number of integer lattice points:", data["fm_latpts"], file=f)
-    print("-"*30, file=f)
-
-f.close()
-
-# counter = 0
-# with open("polytope_data_2-10.csv", 'w') as f:
-#     writer = csv.DictWriter(f, fieldnames=params, delimiter=';')
-#     writer.writeheader()
-#     for n in range(1, 10):
-#         print("Working on compositions of", str(n+1))
-#         vec = tuple([1] + [0]*n)
-#         comps = list(Compositions(n+1))
-#         for i in range(len(comps)):
-#             for j in range(i, len(comps)):
-#                 data = data_dictionary(list(comps[i]), list(comps[j]), vec)
-#                 data["No."] = counter
-#                 counter += 1
-#                 writer.writerow(data)

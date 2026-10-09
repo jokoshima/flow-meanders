@@ -29,7 +29,7 @@ def makecsv_allcomps(low, high, vecs, progbar=1000):
     if isinstance(vecs, tuple):
         vecs = [tuple(vecs[:i]) for i in range(low, high+1)]
 
-    with open("All_Composition_Pairs_with_Weight_" + str(low) + "-" + str(high) + ".csv", 'w') as csvf:
+    with open("All_Composition_Pairs_with_Weights_" + str(low) + "-" + str(high) + ".csv", 'w') as csvf:
         writer = csv.DictWriter(csvf, fieldnames=params, delimiter=";")
         writer.writeheader()
         for n in range(low, high+1):
@@ -44,6 +44,48 @@ def makecsv_allcomps(low, high, vecs, progbar=1000):
                     if progbar and counter % progbar == 0:
                         print(counter, "/", total_pairs, "done")
 
+def makecsv_ncomps(low, high, vecs, progbar=1000):
+    params = params_global()
+    counter = 1
+    total_pairs = sum([2^(i-1) for i in range(low, high+1)])
+    if isinstance(vecs, tuple):
+        vecs = [tuple(vecs[:i]) for i in range(low, high+1)]
+
+    with open("All_Compositions_Over_(n)_with_Weights_" + str(low) + "-" + str(high) + ".csv", 'w') as csvf:
+        writer = csv.DictWriter(csvf, fieldnames=params, delimiter=";")
+        writer.writeheader()
+        for n in range(low, high+1):
+            vec = vecs[n-low]
+            comps = list(Compositions(n))
+            for i in range(len(comps)):
+                data = fm.data_dictionary(list(comps[i]), [n], vec)
+                data["No."] = counter 
+                counter += 1
+                writer.writerow(data)
+                if progbar and counter % progbar == 0:
+                    print(counter, "/", total_pairs, "done")
+
+def makecsv_onescomps(low, high, vecs, progbar=1000):
+    params = params_global()
+    counter = 1
+    total_pairs = sum([2^(i-1) for i in range(low, high+1)])
+    if isinstance(vecs, tuple):
+        vecs = [tuple(vecs[:i]) for i in range(low, high+1)]
+
+    with open("All_Compositions_Over_(1^n)_with_Weights_" + str(low) + "-" + str(high) + ".csv", 'w') as csvf:
+        writer = csv.DictWriter(csvf, fieldnames=params, delimiter=";")
+        writer.writeheader()
+        for n in range(low, high+1):
+            vec = vecs[n-low]
+            comps = list(Compositions(n))
+            for i in range(len(comps)):
+                data = fm.data_dictionary(list(comps[i]), [1]*n, vec)
+                data["No."] = counter 
+                counter += 1
+                writer.writerow(data)
+                if progbar and counter % progbar == 0:
+                    print(counter, "/", total_pairs, "done")
+
 def get_matches(csvfpath, param1, param2):
     filename = "_".join(["matches", param1, param2, ".txt"])
     out = open(filename, "a")
@@ -54,7 +96,8 @@ def get_matches(csvfpath, param1, param2):
                 print(row["top_comp"], "//", row["bottom_comp"], "\n", param1, row[param1], "\n", param2, row[param2], "\n", file=out)
     out.close()
 
-# makecsv_allcomps(2, 8, (1,0,0,0,0,0,0,0))
-compare = ["fm_volume", "fm_nvolume", "fm_latpts", "sfm_volume", "sfm_nvolume", "sfm_latpts"]
-for param in compare:
-    get_matches("All_Composition_Pairs_with_Weight_2-8.csv", "index", param)
+makecsv_ncomps(2,12,(1,0,0,0,0,0,0,0,0,0,0,0))
+makecsv_onescomps(2,12,(1,0,0,0,0,0,0,0,0,0,0,0))
+# compare = ["fm_volume", "fm_nvolume", "fm_latpts", "sfm_volume", "sfm_nvolume", "sfm_latpts"]
+# for param in compare:
+#     get_matches("All_Composition_Pairs_with_Weight_2-8.csv", "index", param)
