@@ -153,6 +153,37 @@ def sink_flow_meander(L1, L2):
     return DiGraph(edges, multiedges=True)
 
 """
+Returns all the directed paths of a flow meander as lists of labelled edges.
+Labels only tell us the type of edge (top, bottom, spine), not the component.
+draw=True gives a string of Unicode characters representing the path.
+"""
+def directed_paths(L1, L2, draw=False):
+    fmdr = flow_meander(L1, L2)
+    paths = fmdr.all_paths(1, fmdr.order(), use_multiedges=True, report_edges=True, labels=True)
+    if not draw:
+        return paths
+    
+    spine = chr(8212)
+    top = chr(8254)
+    bottom = '_'
+    drawings = []
+    for path in paths:
+        drawing = ""
+        for edge in path:
+            if edge[2] == 'S':
+                drawing += spine
+            elif edge[2] == 'B':
+                drawing += bottom*(edge[1]-edge[0])
+            elif edge[2] == 'T':
+                drawing += top*(edge[1]-edge[0])
+        drawings.append(drawing)
+    return drawings
+    
+    # Generate all of them, count will come and get proven later
+    # num=False flag for just returning the number (we can put a formula here later if needed)
+    # Use something from the graph library
+
+"""
 Generates the polytope corresponding to the seaweed algebra 
 defined by the compositions L1 and L2 written as lists.
 """
@@ -264,6 +295,40 @@ def draw_sink_flow_meander(M, L1, L2):
     plot.savefig(" ".join(["sfmeander", str(L1), str(L2)]) + ".png", dpi=480)
     plot.clear()
 
+"""
+Computes the covolume of a flow meander polytope associated with two compositions. 
+This method is based on a polytope basis conjecture that is not proven as of 23/10/2026.
+"""
+def covolume(L1, L2):
+    verts = []
+    mdr = meander(L1, L2)
+    n = mdr.order()
+
+    top_edges = [e for e in mdr.edges() if e[2] == 'T']
+    top_edges.sort()
+    top_offset = n-1
+    top_starts = {top_edges[i][0]:i+top_offset for i in range(len(top_edges))}
+    
+    bot_edges = [e for e in mdr.edges() if e[2] == 'B']
+    bot_edges.sort()
+    bot_offset = n-1 + len(top_edges)
+    bot_starts = {bot_edges[i][0]:i+bot_offset for i in range(len(bot_edges))}
+    
+    for edge in mdr.edges():
+        v = [0] * (mdr.size()+n-1)
+        if edge[2] == 'T':
+            v[top_starts[edge[0]]] += 1
+        if edge[2] == 'B':
+            v[bot_starts[edge[0]]] += 1
+        for i in range(edge[0], edge[1]):
+            v[i-1] -= 1
+        verts.append(vector(v))
+    
+    V = matrix(verts)
+    V_T = column_matrix(verts)
+    G = V * V_T
+    return(sqrt(det(G)))
+
 
 def data_dictionary(L1, L2, vec):
     data = dict()
@@ -312,24 +377,29 @@ params = ["No.", "top_comp", "bottom_comp", "num_pieces", "cycles", "paths", "po
 
 curr_params = ["sfm_dimension", "sfm_volume", "sfm_nvolume", "sfm_ehrhart", "sfm_fvector"]
 
-pol1 = polytopes.permutahedron(3)
-new_pol = ambient_reduction(pol1, symb=True)
-print(*new_pol[1], sep="\n")
-print("#" * 30)
+bound = 11
 
-pol2 = weighted_flow_polytope(flow_meander([2,1,1,1], [5]), (1,0,0,0))
-new_pol = ambient_reduction(pol2, symb=True)
-print(*new_pol[1], sep="\n")
-print("#" * 30)
+for n in range(5, bound):
+    comp1 = [n-3,1,1,1]
+    comp2 = [n]
+    print(n, covolume(comp1, comp2))
 
-# upto = 6
-# pairs = [[[n-3,1,1,1], [n]] for n in range(5, upto+1)]
-# for pair in pairs:
-#     comp1 = pair[0]
-#     comp2 = pair[1]
-#     n = comp2[0]
-#     fm = flow_meander(comp1, comp2)
-#     fmpoly = weighted_flow_polytope(fm, tuple([1] + [0]*(n-2)))
-#     print(n)
-#     print(list(fmpoly.vertices()))
-
+# bound = 8
+# bar = 1
+# for n in range(2, bound+1):
+#     comps = list(Compositions(n))
+#     vec = tuple([1] + [0]*(n-2))
+#     for i in range(len(comps)):
+#         for j in range(i):
+#             comp1 = list(comps[i])
+#             comp2 = list(comps[j])
+#             mdr = meander(comp1, comp2)
+#             edges = mdr.size()
+#             fmdr = flow_meander(comp1, comp2)
+#             fpol = weighted_flow_polytope(fmdr, vec)
+#             dim = fpol.dim()
+#             if edges != dim:
+#                 print('|'.join([str[c] for c in comp1]), '|'.join([str[c] for c in comp2]), edges, dim, sep='\t')
+#             if bar % 500 == 0:
+#                 print(bar)
+#             bar += 1
